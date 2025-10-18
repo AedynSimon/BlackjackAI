@@ -3,37 +3,38 @@ from environment import BlackjackEnvironment
 
 def main():
     print("Welcome to Blackjack!")
-    print("Actions: [0] Stand, [1] Hit, [2] Toggle Ace\n")
+    print("Actions: [0] Stand, [1] Hit\n")
 
-    # Ask user how many decks to use
-    while True:
-        try:
-            num_decks = int(
-                input("How many decks do you want to play with? (1–8): "))
-            if 1 <= num_decks <= 8:
-                break
-            print("Please choose a number between 1 and 8.")
-        except ValueError:
-            print("Please enter a valid number.")
+    # Set number of decks for the AI to train on
 
-    # Create the environment using that number of decks
+    # 1 = 1 deck
+    # 6 = 6 deck
+    # -1 = inf decks
+    num_decks = -1
+
+    # # Create the environment using that number of decks
     env = BlackjackEnvironment(num_decks=num_decks)
 
     while True:  # Loop to allow multiple games
         obs = env.reset()
         done = False
 
-        print(
-            f"\n--- New Round ({num_decks} deck{'s' if num_decks > 1 else ''}) ---")
-        env.display(reveal=False)
+        if num_decks == -1:
+            print(
+                f"\n--- New Round (Infinite decks) ---")
+            env.display(reveal=False)
+        else:
+            print(
+                f"\n--- New Round ({num_decks} deck{'s' if num_decks > 1 else ''}) ---")
+            env.display(reveal=False)
 
         # Main gameplay loop
         while not done:
             try:
                 action = int(
-                    input("Choose action (0=stand, 1=hit, 2=toggle ace): "))
-                if action not in [0, 1, 2]:
-                    print("Invalid action. Please enter 0, 1, or 2.")
+                    input("Choose action (0=stand, 1=hit): "))
+                if action not in [0, 1]:
+                    print("Invalid action. Please enter 0 or 1.")
                     continue
             except ValueError:
                 print("Please enter a valid number.")

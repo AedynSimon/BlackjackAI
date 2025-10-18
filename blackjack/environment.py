@@ -5,7 +5,24 @@ import random
 
 def hand_value(hand):
     """Return the total value of a hand"""
-    return sum(hand)
+    running_sum = 0
+    ace_count = 0
+    # Get total ace-high sum
+    for card in hand:
+        if card in ['K', 'Q', 'J']:
+            running_sum += 10
+        elif card == 'A':
+            running_sum += 11
+            ace_count += 1
+        else:
+            running_sum += card
+    
+    # Turn aces from 11's back into 1's if the current hand is over 21
+    while (running_sum > 21 and ace_count > 0):
+        running_sum -= 10
+        ace_count -= 1
+
+    return running_sum
 
 
 def is_bust(hand):
@@ -13,26 +30,11 @@ def is_bust(hand):
     return hand_value(hand) > 21
 
 
-def has_ace(hand):
-    """Check if hand has any ace(s)"""
-    if 1 in hand or 11 in hand:
-        return True
-    return False
-
-
-def ace_mode(hand):
-    """Return True if any ace in hand is currently 11"""
-    for card in hand:
-        if card == 11:
-            return True
-    return False
-
-
 # --- Environment class ---
 
 
 class BlackjackEnvironment:
-    def __init__(self, natural=False, num_decks=8):
+    def __init__(self, natural=False, num_decks=6, infinite_decks = False):
         self.natural = natural  # Optional 1.5 on a "natural" Blackjack
         self.num_decks = num_decks  # Number of decks to use
         self.dealer = None  # Dealer's hand
@@ -41,14 +43,18 @@ class BlackjackEnvironment:
 
     def make_deck(self, num_decks=1):
         """Create and shuffle a shoe with the given number of decks."""
-        single_deck = [1, 2, 3, 4, 5, 6, 7, 8,
-                       9, 10, 10, 10, 10] * 4  # 52 cards
+        single_deck = ['A', 2, 3, 4, 5, 6, 7, 8,
+                       9, 10, 'J', 'Q', 'K'] * 4  # 52 cards
         deck = single_deck * num_decks  # Multiply by number of decks
         random.shuffle(deck)
         return deck
 
     def draw_card(self):
-        """Draw a card: 1 = Ace, 2-10 = face value, 10 = Jack/Queen/King"""
+        """Draw a card"""\
+        # If number of decks is infinite, draw a random card
+        if (self.num_decks == -1):
+            return random.choice(['A', 2, 3, 4, 5, 6, 7, 8, 9, 10, 'J', 'Q', 'K'])
+
         if not self.deck:  # Reshuffle if all cards used
             print("Reshuffling shoe...")
             self.deck = self.make_deck(self.num_decks)
@@ -66,35 +72,21 @@ class BlackjackEnvironment:
         return self.observation()
 
     def observation(self):
-        """Observation = (player_sum, dealer_showing, has_ace, ace_mode)"""
+        """Observation = (player_sum, dealer_showing)"""
         return (
             hand_value(self.player),
             self.dealer[0],
-            has_ace(self.player),
-            ace_mode(self.player)
         )
 
     def step(self, action):
         """
         Take an action in the environment.
         action: 
-          0 = stand
-          1 = hit
-          2 = toggle_ace (switch one Ace between 1 and 11)
+            0 = stand
+            1 = hit
         """
-        # Toggle ace value
-        if action == 2:
-            for i, card in enumerate(self.player):
-                if card == 1:
-                    self.player[i] = 11
-                    break
-                elif card == 11:
-                    self.player[i] = 1
-                    break
-            return self.observation(), 0, False, {}
-
         # Hit
-        elif action == 1:
+        if action == 1:
             self.player.append(self.draw_card())
             if is_bust(self.player):
                 # Player busts immediate loss
