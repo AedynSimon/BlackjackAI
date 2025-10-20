@@ -16,7 +16,7 @@ def hand_value(hand):
             ace_count += 1
         else:
             running_sum += card
-    
+
     # Turn aces from 11's back into 1's if the current hand is over 21
     while (running_sum > 21 and ace_count > 0):
         running_sum -= 10
@@ -24,9 +24,11 @@ def hand_value(hand):
 
     return running_sum
 
+
 def is_natural(hand):
     if len(hand) == 2:
         return ('A' in hand and any(card in [10, 'J', 'Q', 'K'] for card in hand))
+
 
 def is_bust(hand):
     """Return True if the hand value exceeds 21"""
@@ -36,7 +38,7 @@ def is_bust(hand):
 
 
 class BlackjackEnvironment:
-    def __init__(self, natural=False, num_decks=6, infinite_decks = False):
+    def __init__(self, natural=False, num_decks=6, infinite_decks=False):
         self.num_decks = num_decks  # Number of decks to use
         self.dealer = None  # Dealer's hand
         self.player = None  # Player's hand
@@ -54,7 +56,7 @@ class BlackjackEnvironment:
 
     def draw_card(self):
         """Draw a card"""\
-        # If number of decks is infinite, draw a random card
+            # If number of decks is infinite, draw a random card
         if (self.num_decks == -1):
             return random.choice(['A', 2, 3, 4, 5, 6, 7, 8, 9, 10, 'J', 'Q', 'K'])
 
@@ -69,16 +71,17 @@ class BlackjackEnvironment:
         self.update_count(card)
 
         return card
-    
 
     # Card counting with a true count
+
     def update_count(self, card):
         if card in {'J', 'Q', 'K', 'A', 10}:
             self.running_count -= 1
         elif (card >= 2) and (card <= 6):
             self.running_count += 1
 
-        self.true_count = self.running_count / (max((len(self.deck) / 52), 1e-6))
+        self.true_count = self.running_count / \
+            (max((len(self.deck) / 52), 1e-6))
 
     def draw_hand(self):
         """Draw two cards to form a hand"""
@@ -113,7 +116,7 @@ class BlackjackEnvironment:
             else:
                 # Player has natural
                 return self.observation(), 1.5, True, {}
-        
+
         # Hit
         if action == 1:
             self.player.append(self.draw_card())
@@ -128,7 +131,7 @@ class BlackjackEnvironment:
         else:
             # Check if dealer has a natural blackjack
             if is_natural(self.dealer):
-                return self.observation(), -1, True, {}  
+                return self.observation(), -1, True, {}
 
             # Dealer draws until reaching 17 or higher
             while hand_value(self.dealer) < 17:
