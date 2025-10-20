@@ -24,6 +24,9 @@ def hand_value(hand):
 
     return running_sum
 
+def is_natural(hand):
+    if len(hand) == 2:
+        return ('A' in hand and any(card in [10, 'J', 'Q', 'K'] for card in hand))
 
 def is_bust(hand):
     """Return True if the hand value exceeds 21"""
@@ -34,7 +37,6 @@ def is_bust(hand):
 
 class BlackjackEnvironment:
     def __init__(self, natural=False, num_decks=6, infinite_decks = False):
-        self.natural = natural  # Optional 1.5 on a "natural" Blackjack
         self.num_decks = num_decks  # Number of decks to use
         self.dealer = None  # Dealer's hand
         self.player = None  # Player's hand
@@ -104,6 +106,14 @@ class BlackjackEnvironment:
             0 = stand
             1 = hit
         """
+
+        if is_natural(self.player):
+            if is_natural(self.dealer):
+                return self.observation(), 0, True, {}  # Both natural, push
+            else:
+                # Player has natural
+                return self.observation(), 1.5, True, {}
+        
         # Hit
         if action == 1:
             self.player.append(self.draw_card())
@@ -116,6 +126,10 @@ class BlackjackEnvironment:
 
         # Stand
         else:
+            # Check if dealer has a natural blackjack
+            if is_natural(self.dealer):
+                return self.observation(), -1, True, {}  
+
             # Dealer draws until reaching 17 or higher
             while hand_value(self.dealer) < 17:
                 self.dealer.append(self.draw_card())
