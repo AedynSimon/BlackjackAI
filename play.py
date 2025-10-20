@@ -10,7 +10,7 @@ def main():
     # 1 = 1 deck
     # 6 = 6 deck
     # -1 = inf decks
-    num_decks = -1
+    num_decks = 1
 
     # # Create the environment using that number of decks
     env = BlackjackEnvironment(num_decks=num_decks)
