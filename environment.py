@@ -29,7 +29,6 @@ def is_bust(hand):
     """Return True if the hand value exceeds 21"""
     return hand_value(hand) > 21
 
-
 # --- Environment class ---
 
 
@@ -40,6 +39,8 @@ class BlackjackEnvironment:
         self.dealer = None  # Dealer's hand
         self.player = None  # Player's hand
         self.deck = None  # The current deck of cards
+        self.true_count = 0
+        self.running_count = 0
 
     def make_deck(self, num_decks=1):
         """Create and shuffle a shoe with the given number of decks."""
@@ -55,10 +56,27 @@ class BlackjackEnvironment:
         if (self.num_decks == -1):
             return random.choice(['A', 2, 3, 4, 5, 6, 7, 8, 9, 10, 'J', 'Q', 'K'])
 
-        if not self.deck:  # Reshuffle if all cards used
+        if not self.deck:  # Reshuffle if all cards used and reset card counting
             print("Reshuffling shoe...")
             self.deck = self.make_deck(self.num_decks)
-        return self.deck.pop()
+            self.running_count = 0
+            self.true_count = 0
+
+        card = self.deck.pop()
+
+        self.update_count(card)
+
+        return card
+    
+
+    # Card counting with a true count
+    def update_count(self, card):
+        if card in {'J', 'Q', 'K', 'A', 10}:
+            self.running_count -= 1
+        elif (card >= 2) and (card <= 6):
+            self.running_count += 1
+
+        self.true_count = self.running_count / (max((len(self.deck) / 52), 1e-6))
 
     def draw_hand(self):
         """Draw two cards to form a hand"""
@@ -76,6 +94,7 @@ class BlackjackEnvironment:
         return (
             hand_value(self.player),
             self.dealer[0],
+            self.true_count
         )
 
     def step(self, action):
