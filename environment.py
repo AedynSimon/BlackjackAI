@@ -17,22 +17,27 @@ def hand_value(hand):
         else:
             running_sum += card
 
+    temp_ace_count = ace_count
+
     # Turn aces from 11's back into 1's if the current hand is over 21
     while (running_sum > 21 and ace_count > 0):
         running_sum -= 10
         ace_count -= 1
+    
+    is_soft = (temp_ace_count > ace_count) or (ace_count > 0 and running_sum <= 21)
 
-    return running_sum
+    return running_sum, is_soft
 
 
 def is_natural(hand):
     if len(hand) == 2:
-        return ('A' in hand and any(card in [10, 'J', 'Q', 'K'] for card in hand))
-
+        value, is_soft = hand_value(hand)
+        return value == 21 and is_soft
 
 def is_bust(hand):
     """Return True if the hand value exceeds 21"""
-    return hand_value(hand) > 21
+    value, _ = hand_value(hand)
+    return value > 21
 
 # --- Environment class ---
 
@@ -96,10 +101,12 @@ class BlackjackEnvironment:
 
     def observation(self):
         """Observation = (player_sum, dealer_showing)"""
+        player_val, player_soft = hand_value(self.player)
         return (
-            hand_value(self.player),
+            player_val,
             self.dealer[0],
-            self.true_count
+            self.true_count,
+            player_soft
         )
 
     def step(self, action):
@@ -134,7 +141,8 @@ class BlackjackEnvironment:
                 return self.observation(), -1, True, {}
 
             # Dealer draws until reaching 17 or higher
-            while hand_value(self.dealer) < 17:
+            dealer_value, _ = hand_value(self.dealer)
+            while dealer_value < 17:
                 self.dealer.append(self.draw_card())
             # Compare hands and calculate result
             reward = self.compare()
@@ -142,8 +150,8 @@ class BlackjackEnvironment:
 
     def compare(self):
         """Compare player and dealer hands and return the game outcome."""
-        player_value = hand_value(self.player)
-        dealer_value = hand_value(self.dealer)
+        player_value, _ = hand_value(self.player)
+        dealer_value, _ = hand_value(self.dealer)
 
         if is_bust(self.dealer):
             return +1  # Dealer busts player wins
